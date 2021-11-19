@@ -486,6 +486,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>terminal</GroupName>
+          <Files>
+            <File>
+              <FileName>terminal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\terminal.c</FilePath>
+            </File>
+            <File>
+              <FileName>terminal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\terminal.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
         <Group>

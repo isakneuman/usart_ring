@@ -1,15 +1,13 @@
 #include "global.h"
-
 void 			magic_function(void);
 uint8_t 	check_for_send(void);
 
 int main(){
 	
 	SystemInit();
-	
 	// led init
 	
-	init_gpio(GPIOB,0,OUTPUT_PUSH_PULL,OUTPUT_MODE_10MHz);
+	init_gpio(GPIOC,13,OUTPUT_PUSH_PULL,OUTPUT_MODE_10MHz);
 	init_gpio(GPIOA,7,OUTPUT_PUSH_PULL,OUTPUT_MODE_10MHz);
 	
 	// button init
@@ -18,28 +16,21 @@ int main(){
 	
 	// delay iniy
 	init_my_delay();
-	
-	// usart init
-	init_usart(9600);
-	// init_my_word();
-	
+	//init_usart(9600);
+	init_terminal();
+	GPIOC->BSRR |= GPIO_BSRR_BS13;
+	//GPIOC->BSRR |= GPIO_BSRR_BR13;
 	while(1){
 		
-		magic_function();
+		//set_TXE();
+		
+		//USART1->DR = a;
+		//test();
+		send_str();
 		
 	}
 }
-// if enter that value 0x0D0A
-uint8_t check_for_send(void){
-	if(get_element(rbuff, (get_tail_r() % BUFF_SIZE) ) == ENTER_VALL2){
-		return FALSE;
-	}
-	if(get_element(rbuff, (get_tail_r() % BUFF_SIZE) ) == ENTER_VALL1){
-			return FALSE;
-		}
-	return TRUE;
-}
-
+/*
 void 		magic_function(void){
 	
 	uint8_t count = is_new_element_r();
@@ -70,8 +61,9 @@ void 		magic_function(void){
 				set_head_r(get_head_r()-2);
 			}
 			set_flag_TXE(TRUE);
-			USART1->CR1		|=	USART_CR1_TXEIE;
+			
 		}
 	}
 }
 
+*/

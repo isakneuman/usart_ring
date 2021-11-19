@@ -7,4 +7,4 @@
   C:\Users\isakn\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include\cmsis_compiler.h \
   C:\Users\isakn\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include\cmsis_armclang.h \
   C:\Users\isakn\AppData\Local\Arm\Packs\Keil\STM32F1xx_DFP\2.3.0\Device\Include\system_stm32f10x.h \
-  my_gpio.h button.h my_math.h usart_better.h
+  my_gpio.h button.h my_math.h usart_better.h terminal.h

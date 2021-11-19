@@ -6,8 +6,7 @@
 	#include "my_delay.h"
 	#include "button.h"
 	#include "my_math.h"
-//	#include "first.h"
 	#include "usart_better.h"
-
+	#include "terminal.h"
 
 #endif

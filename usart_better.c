@@ -1,145 +1,180 @@
 #include "usart_better.h"
 
 
-uint8_t 	tbuff[BUFF_SIZE];
-uint8_t 	rbuff[BUFF_SIZE];
-uint8_t 	ownbuff[] = {
-	'H','e','l','l','o',',',' '
-};
+volatile RING_BUFF_t	*RBUFF;
+volatile RING_BUFF_t	*TBUFF;
 
-uint8_t		count_t	=	0;
-uint8_t		tail_t	=	0;
-uint8_t		head_t	=	0;
-uint8_t 	count_r	=	0;
-uint8_t		tail_r	=	0;
-uint8_t		head_r	=	0;
+void 			set_element(	RING_BUFF_t*,
+												uint8_t);
+	
+uint8_t		get_element(	RING_BUFF_t*);
+	
+void 			get_element2(	RING_BUFF_t* ring,
+												uint8_t* data);
+
+
+RING_BUFF_t	init_ring_buff(		uint8_t 	head,
+															uint8_t 	tail,
+															uint8_t*	buff,
+															uint8_t		size)
+{
+	RING_BUFF_t ring;
+	ring.head = head;
+	ring.tail = tail;
+	ring.buff = buff;
+	ring.size = size;
+	return ring;
+}
 
 uint8_t 	flag_TXE	=	0;
 uint8_t		flag_RXNE	=	0;
 
-uint8_t 	counter_ownword = 0;
-
-uint8_t		is_new_element_r(void){
-	return !(get_tail_r()==get_head_r());
+void			set_TBUFF(RING_BUFF_t* ring)
+{
+	TBUFF = ring;
+}
+void			set_RBUFF(RING_BUFF_t* ring)
+{
+	RBUFF = ring;
 }
 
-uint8_t		is_new_element_t(void){
-	return !(get_tail_t()==get_head_t());
+RING_BUFF_t*	get_RBUFF(void)
+{
+	return RBUFF;
 }
 
 
-uint8_t		get_count_t(void){
+void			set_TXE(void)
+{
+	flag_TXE	=		 1;
+	USART1->CR1		|=	USART_CR1_TXEIE;
+}
+void 			reset_TXE(void)
+{
+	flag_TXE	=		 0;
+	USART1->CR1		&=	~USART_CR1_TXEIE;
+}
+//
+
+void			recieve(void)
+{
+	set_element(RBUFF,USART1->DR);
+}
+
+
+static uint8_t i = 0;
+void			send_array(void)
+{
+	USART1->DR	=	array[i++];
+	if(i >= END_ARRAY){
+		i = 0;
+		reset_TXE();
+	}
+}
 	
-	if( get_tail_t() <= get_head_t() ){
-		return ( get_head_t()-get_tail_t() );
+void			send(void)
+{
+	if( !has_unread(TBUFF) )
+	{
+		reset_TXE();
 	}
-	else{
-		return (MAX_8BYTE_VALUE-get_tail_t()+get_head_t());
+	else
+	{
+		GPIOC->ODR ^= GPIO_ODR_ODR13;
+		get_element2(TBUFF,&USART1->DR);
 	}
-}
-uint8_t		get_count_r(void){
-
-	if( get_tail_r() <= get_head_r() ){
-		return ( get_head_r()-get_tail_r() );
-	}
-	else{
-		return (MAX_8BYTE_VALUE-get_tail_r()+get_head_r());
-	}
-}
-
-void			set_count_t(uint8_t value){
-	count_t	=	value;
-}
-void			set_count_r(uint8_t value){
-	count_r	=	value;
-}
-
-uint8_t 	set_flag_TXE(uint8_t i){
-	return (flag_TXE	=		 i);
-}
-uint8_t 	get_flag_TXE(void){
-	return flag_TXE;
-}
-
-uint8_t 	set_flag_RXNE(uint8_t i){
-	return (flag_RXNE	=		 i);
-}
-uint8_t 	get_flag_RXNE(void){
-	return flag_RXNE;
-}
-//
-uint8_t	get_tail_t(void){
-	return	tail_t;
-}
-uint8_t	get_tail_r(void){
-	return	tail_r;
-}
-uint8_t	get_head_t(void){
-	return	head_t;
-}
-uint8_t	get_head_r(void){
-	return	head_r;
-}
-void			set_tail_t(uint8_t value){
-	tail_t	=	value;
-}
-void			set_tail_r(uint8_t value){
-	tail_r	=	value;
-}
-void			set_head_t(uint8_t value){
-	head_t	=	value;
-}
-void			set_head_r(uint8_t value){
-	head_r	=	value;
-}
-//
-
-void			recieve(void){
-	set_element(rbuff, (get_head_r()%BUFF_SIZE) ,USART1->DR);
-	set_head_r(get_head_r()+1);
-}
-
-void			transfer(void){
-	if(is_new_element_t()){
-		USART1->DR	=	get_element(tbuff, (get_tail_t()%BUFF_SIZE) );
-		set_tail_t(get_tail_t()+1);
-	}
-	else{
-		USART1->DR	=	0x0A;
-		counter_ownword	=	0;
-		set_flag_TXE(FALSE);
-		USART1->CR1		&=	~USART_CR1_TXEIE;
-	}
+//	USART1->DR = get_element(TBUFF);
+	
 }
 // end transfer
 
-
-uint8_t		send_static_own_word(void){
-	return (counter_ownword<=OWNBUFF_SIZE);
+uint8_t		has_unread(	RING_BUFF_t* ring)
+{
+	volatile uint8_t temp = get_count(ring);
+	if(temp)
+	{
+		return 1;
+	}
+	return 0;
 }
 
-void 			set_element(uint8_t* buff, uint8_t ordinal_num, uint8_t data){
-	*(buff+ordinal_num)	=	data;
+void			write_data(	RING_BUFF_t* ring,
+											uint8_t data)
+{
+	set_element(ring,data);
+}
+//
+
+void			read_data2(	RING_BUFF_t* ring,
+											uint8_t* data)
+{
+	*data = get_element(ring);
+}
+//
+
+uint8_t 	read_data(	RING_BUFF_t* ring)
+{
+	uint8_t temp = 0;
+	temp = get_element(ring);
+	return temp;
+}
+//
+
+uint8_t get_TXE(void)
+{
+	return flag_TXE;
+}
+//
+
+uint8_t 	get_count(		RING_BUFF_t* ring)
+{
+	uint8_t temp = 0;
+	if(ring->tail<=ring->head)
+	{
+		temp = ring->head - ring->tail;
+	}
+	else
+	{
+		temp = MAX_8BYTE_VALUE - ring->tail + ring->head;
+	}
+	return temp;
+}
+//
+
+void 			set_element(	RING_BUFF_t* ring,
+												uint8_t data)
+{
+	ring->buff[ ring->head++ % ring->size ] = data;
+}
+//
+
+void 			get_element2(	RING_BUFF_t* ring,
+												uint8_t* data)
+{
+	*data = ring->buff[ ring->tail++ % ring->size];
+}
+//
+
+uint8_t 	read_element(	RING_BUFF_t* ring)
+{
+	return ring->buff[ (ring->tail) % ring->size ];
 }
 
-uint8_t		get_element(uint8_t* buff, uint8_t ordinal_num){
-	return *(buff+ordinal_num);
+uint8_t		get_element(	RING_BUFF_t* ring)
+{
+	uint8_t temp;
+	temp	=	ring->buff[ ring->tail++ % ring->size ];
+	return temp;
 }
-
 // end get set element
-
+ 
 void 			USART1_IRQHandler(void){
 	
 	if ( USART1->SR & USART_SR_RXNE ){
 		recieve();
 	}
- 	if ( (USART1->SR & USART_SR_TXE) && get_flag_TXE()){
-		if(send_static_own_word()){
-			USART1->DR	=	get_element(ownbuff,counter_ownword++);
-		}else{
-			transfer();
-		}
-		
+ 	if ( (USART1->SR & USART_SR_TXE) && get_TXE()){
+		send();
 	}
 }
 //	END IRQHandler
@@ -160,5 +195,6 @@ void 			init_usart(uint16_t brr){
 	NVIC_EnableIRQ (USART1_IRQn);
 	init_gpio(GPIOA,TX_PIN,OUTPUT_ALLTER_PUSH_PULL,OUTPUT_MODE_10MHz);
 	init_gpio(GPIOA,RX_PIN,INPUT_FLOAT,INPUT_MODE);
+
 }
 //	END INIT
