@@ -1,8 +1,18 @@
 #include "usart_better.h"
 
+uint8_t 		TBUFF_bussy	=	0;
 
-volatile RING_BUFF_t	*RBUFF;
-volatile RING_BUFF_t	*TBUFF;
+RING_BUFF_t	*RBUFF;
+RING_BUFF_t	*TBUFF;
+
+uint8_t 	get_TBUFF_bussy(void)
+{
+	return TBUFF_bussy;
+}
+void			set_TBUFF_bussy(uint8_t data)
+{
+	TBUFF_bussy	= data;
+}
 
 void 			set_element(	RING_BUFF_t*,
 												uint8_t);
@@ -23,11 +33,11 @@ RING_BUFF_t	init_ring_buff(		uint8_t 	head,
 	ring.tail = tail;
 	ring.buff = buff;
 	ring.size = size;
+	ring.sent	=	0;
 	return ring;
 }
 
-uint8_t 	flag_TXE	=	0;
-uint8_t		flag_RXNE	=	0;
+volatile uint8_t 	flag_TXE	=	0;
 
 void			set_TBUFF(RING_BUFF_t* ring)
 {
@@ -51,7 +61,7 @@ void			set_TXE(void)
 }
 void 			reset_TXE(void)
 {
-	flag_TXE	=		 0;
+	flag_TXE			=		0;
 	USART1->CR1		&=	~USART_CR1_TXEIE;
 }
 //
@@ -77,20 +87,19 @@ void			send(void)
 	if( !has_unread(TBUFF) )
 	{
 		reset_TXE();
+		TBUFF->sent	=	1;
+		set_TBUFF_bussy(0);
 	}
 	else
 	{
-		GPIOC->ODR ^= GPIO_ODR_ODR13;
 		get_element2(TBUFF,&USART1->DR);
 	}
-//	USART1->DR = get_element(TBUFF);
-	
 }
 // end transfer
 
 uint8_t		has_unread(	RING_BUFF_t* ring)
 {
-	volatile uint8_t temp = get_count(ring);
+	uint8_t temp = get_count(ring);
 	if(temp)
 	{
 		return 1;
@@ -152,6 +161,8 @@ void 			get_element2(	RING_BUFF_t* ring,
 												uint8_t* data)
 {
 	*data = ring->buff[ ring->tail++ % ring->size];
+//	0 1  2  3  4  5  6  7
+//	8 9  10 11 12 13 14 15
 }
 //
 
@@ -174,8 +185,10 @@ void 			USART1_IRQHandler(void){
 		recieve();
 	}
  	if ( (USART1->SR & USART_SR_TXE) && get_TXE()){
+	
 		send();
 	}
+	
 }
 //	END IRQHandler
 

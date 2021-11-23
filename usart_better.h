@@ -15,6 +15,8 @@
 	#define TIMEOUT					5000
 	#define END_ARRAY				5
 	
+	uint8_t 	get_TBUFF_bussy(void);
+	void			set_TBUFF_bussy(uint8_t);
 	void			send_array(void);
 	static uint8_t array[END_ARRAY] = "Hello";
 	typedef struct {
@@ -22,6 +24,7 @@
 		uint8_t		tail;
 		uint8_t* 	buff;
 		uint8_t 	size;
+		uint8_t 	sent;
 	}	RING_BUFF_t;
 	
 	RING_BUFF_t	init_ring_buff(	uint8_t,
