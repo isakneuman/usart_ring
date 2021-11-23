@@ -84,6 +84,15 @@ void			send_array(void)
 	
 void			send(void)
 {
+/*
+*----------------------------------
+*|	Checks if there is anything to send.
+*|	If there is something to send, it sends to USART1->DR.
+*|	If there is nothing to send, stops the interrupt and sets
+*|	the buffer flag as sent and sets a flag that the send buffer
+*|	is free.
+*----------------------------------	
+*/
 	if( !has_unread(TBUFF) )
 	{
 		reset_TXE();
@@ -94,8 +103,7 @@ void			send(void)
 	{
 		get_element2(TBUFF,&USART1->DR);
 	}
-}
-// end transfer
+} // end send
 
 uint8_t		has_unread(	RING_BUFF_t* ring)
 {
@@ -105,38 +113,29 @@ uint8_t		has_unread(	RING_BUFF_t* ring)
 		return 1;
 	}
 	return 0;
-}
+} // end has_unread
 
 void			write_data(	RING_BUFF_t* ring,
 											uint8_t data)
 {
 	set_element(ring,data);
 }
-//
+// end write_data
 
-void			read_data2(	RING_BUFF_t* ring,
-											uint8_t* data)
-{
-	*data = get_element(ring);
-}
-//
-
-uint8_t 	read_data(	RING_BUFF_t* ring)
-{
-	uint8_t temp = 0;
-	temp = get_element(ring);
-	return temp;
-}
-//
 
 uint8_t get_TXE(void)
 {
 	return flag_TXE;
 }
-//
+// 
 
 uint8_t 	get_count(		RING_BUFF_t* ring)
 {
+/*
+*----------------------------------
+*| Returns, the number of unused elements.
+*----------------------------------	
+*/
 	uint8_t temp = 0;
 	if(ring->tail<=ring->head)
 	{
@@ -148,28 +147,32 @@ uint8_t 	get_count(		RING_BUFF_t* ring)
 	}
 	return temp;
 }
-//
+// end get_count
 
 void 			set_element(	RING_BUFF_t* ring,
 												uint8_t data)
 {
 	ring->buff[ ring->head++ % ring->size ] = data;
 }
-//
+// end set_element
 
 void 			get_element2(	RING_BUFF_t* ring,
 												uint8_t* data)
 {
 	*data = ring->buff[ ring->tail++ % ring->size];
-//	0 1  2  3  4  5  6  7
-//	8 9  10 11 12 13 14 15
 }
-//
+// end get_element2
 
 uint8_t 	read_element(	RING_BUFF_t* ring)
 {
+/*
+*------------------------------------
+*|Return the element without deleting it
+*------------------------------------
+*/
 	return ring->buff[ (ring->tail) % ring->size ];
 }
+// end read_element
 
 uint8_t		get_element(	RING_BUFF_t* ring)
 {
@@ -177,7 +180,7 @@ uint8_t		get_element(	RING_BUFF_t* ring)
 	temp	=	ring->buff[ ring->tail++ % ring->size ];
 	return temp;
 }
-// end get set element
+// end get_element
  
 void 			USART1_IRQHandler(void){
 	
